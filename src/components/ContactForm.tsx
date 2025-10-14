@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
-import { Contact } from '../lib/supabase';
+import { Contact } from '../types';
 
 interface ContactFormProps {
   contact?: Contact | null;

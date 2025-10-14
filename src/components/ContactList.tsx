@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Pencil, Trash2, Search, ArrowUpDown } from 'lucide-react';
-import { Contact } from '../lib/supabase';
+import { Contact } from '../types';
 
 interface ContactListProps {
   contacts: Contact[];
