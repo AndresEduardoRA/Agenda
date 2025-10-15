@@ -143,7 +143,7 @@ export function AppointmentForm({ appointment, contacts, onSave, onClose }: Appo
               <select
                 id="status"
                 value={status}
-                onChange={(e) => setStatus(e.target.value as any)}
+                onChange={(e) => setStatus(e.target.value as 'pending' | 'confirmed' | 'cancelled' | 'completed')}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="pending">Pendiente</option>

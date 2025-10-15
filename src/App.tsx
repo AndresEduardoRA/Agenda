@@ -1,23 +1,29 @@
-import { useState, useEffect } from 'react';
-import { UserPlus, LogOut, BookOpen, Calendar } from 'lucide-react';
-import { supabase } from './lib/supabase';
-import { Contact, Appointment, AppointmentWithContact } from './types';
-import { ContactForm } from './components/ContactForm';
-import { ContactList } from './components/ContactList';
-import { AppointmentForm } from './components/AppointmentForm';
-import { AppointmentList } from './components/AppointmentList';
-import { AuthModal } from './components/AuthModal';
+import { useState, useEffect } from "react";
+import { UserPlus, LogOut, BookOpen, Calendar } from "lucide-react";
+import { supabase } from "./lib/supabase";
+import { Contact, Appointment, AppointmentWithContact } from "./types";
+import { ContactForm } from "./components/ContactForm";
+import { ContactList } from "./components/ContactList";
+import { AppointmentForm } from "./components/AppointmentForm";
+import { AppointmentList } from "./components/AppointmentList";
+import { AuthModal } from "./components/AuthModal";
+import { User } from "@supabase/supabase-js";
 
 function App() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
-  const [appointments, setAppointments] = useState<AppointmentWithContact[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentWithContact[]>(
+    []
+  );
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
   const [showAppointmentForm, setShowAppointmentForm] = useState(false);
   const [editingContact, setEditingContact] = useState<Contact | null>(null);
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null);
-  const [activeTab, setActiveTab] = useState<'contacts' | 'appointments'>('contacts');
+  const [editingAppointment, setEditingAppointment] =
+    useState<Appointment | null>(null);
+  const [activeTab, setActiveTab] = useState<"contacts" | "appointments">(
+    "contacts"
+  );
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -47,12 +53,12 @@ function App() {
 
   const loadContacts = async () => {
     const { data, error } = await supabase
-      .from('contacts')
-      .select('*')
-      .order('nombre', { ascending: true });
+      .from("contacts")
+      .select("*")
+      .order("nombre", { ascending: true });
 
     if (error) {
-      console.error('Error loading contacts:', error);
+      console.error("Error loading contacts:", error);
     } else {
       setContacts(data || []);
     }
@@ -60,33 +66,46 @@ function App() {
 
   const loadAppointments = async () => {
     const { data, error } = await supabase
-      .from('appointments')
-      .select(`
+      .from("appointments")
+      .select(
+        `
         *,
         contact:contacts(*)
-      `)
-      .order('date', { ascending: true })
-      .order('time', { ascending: true });
+      `
+      )
+      .order("date", { ascending: true })
+      .order("time", { ascending: true });
 
     if (error) {
-      console.error('Error loading appointments:', error);
+      console.error("Error loading appointments:", error);
     } else {
-      setAppointments(data as AppointmentWithContact[] || []);
+      setAppointments((data as AppointmentWithContact[]) || []);
     }
   };
 
-  const handleAuth = async (email: string, password: string, isLogin: boolean) => {
+  const handleAuth = async (
+    email: string,
+    password: string,
+    isLogin: boolean
+  ) => {
     try {
       if (isLogin) {
-        const { error } = await supabase.auth.signInWithPassword({ email, password });
+        console.log(email, password);
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
         if (error) throw error;
       } else {
+        console.log(email, password);
         const { error } = await supabase.auth.signUp({ email, password });
         if (error) throw error;
       }
       setShowAuthModal(false);
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
     }
   };
 
@@ -103,15 +122,15 @@ function App() {
     try {
       if (editingContact) {
         const { error } = await supabase
-          .from('contacts')
+          .from("contacts")
           .update({ ...contactData, updated_at: new Date().toISOString() })
-          .eq('id', editingContact.id);
+          .eq("id", editingContact.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('contacts')
-          .insert([{ ...contactData, user_id: user.id }]);
+          .from("contacts")
+          .insert([{ ...contactData, user_id: user?.id }]);
 
         if (error) throw error;
       }
@@ -119,8 +138,10 @@ function App() {
       await loadContacts();
       setShowContactForm(false);
       setEditingContact(null);
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
     }
   };
 
@@ -130,14 +151,16 @@ function App() {
   };
 
   const handleDeleteContact = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar este contacto?')) {
+    if (confirm("¿Estás seguro de eliminar este contacto?")) {
       try {
-        const { error } = await supabase.from('contacts').delete().eq('id', id);
+        const { error } = await supabase.from("contacts").delete().eq("id", id);
 
         if (error) throw error;
         await loadContacts();
-      } catch (error: any) {
-        alert(error.message);
+      } catch (error) {
+        if (error instanceof Error) {
+          alert(error.message);
+        }
       }
     }
   };
@@ -163,15 +186,15 @@ function App() {
     try {
       if (editingAppointment) {
         const { error } = await supabase
-          .from('appointments')
+          .from("appointments")
           .update({ ...appointmentData, updated_at: new Date().toISOString() })
-          .eq('id', editingAppointment.id);
+          .eq("id", editingAppointment.id);
 
         if (error) throw error;
       } else {
         const { error } = await supabase
-          .from('appointments')
-          .insert([{ ...appointmentData, user_id: user.id }]);
+          .from("appointments")
+          .insert([{ ...appointmentData, user_id: user?.id }]);
 
         if (error) throw error;
       }
@@ -179,8 +202,10 @@ function App() {
       await loadAppointments();
       setShowAppointmentForm(false);
       setEditingAppointment(null);
-    } catch (error: any) {
-      alert(error.message);
+    } catch (error) {
+      if (error instanceof Error) {
+        alert(error.message);
+      }
     }
   };
 
@@ -190,14 +215,19 @@ function App() {
   };
 
   const handleDeleteAppointment = async (id: string) => {
-    if (confirm('¿Estás seguro de eliminar esta cita?')) {
+    if (confirm("¿Estás seguro de eliminar esta cita?")) {
       try {
-        const { error } = await supabase.from('appointments').delete().eq('id', id);
+        const { error } = await supabase
+          .from("appointments")
+          .delete()
+          .eq("id", id);
 
         if (error) throw error;
         await loadAppointments();
-      } catch (error: any) {
-        alert(error.message);
+      } catch (error) {
+        if (error instanceof Error) {
+          alert(error.message);
+        }
       }
     }
   };
@@ -218,7 +248,9 @@ function App() {
             <BookOpen size={40} className="text-white" />
           </div>
           <h1 className="text-4xl font-bold text-gray-800 mb-4">Mi Agenda</h1>
-          <p className="text-gray-600 mb-8">Gestiona tus contactos de forma fácil y segura</p>
+          <p className="text-gray-600 mb-8">
+            Gestiona tus contactos de forma fácil y segura
+          </p>
           <button
             onClick={() => setShowAuthModal(true)}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -227,7 +259,10 @@ function App() {
           </button>
         </div>
         {showAuthModal && (
-          <AuthModal onAuth={handleAuth} onClose={() => setShowAuthModal(false)} />
+          <AuthModal
+            onAuth={handleAuth}
+            onClose={() => setShowAuthModal(false)}
+          />
         )}
       </div>
     );
@@ -249,10 +284,12 @@ function App() {
             </div>
             <div className="flex gap-3">
               <button
-                onClick={activeTab === 'contacts' ? handleAddNew : handleAddAppointment}
+                onClick={
+                  activeTab === "contacts" ? handleAddNew : handleAddAppointment
+                }
                 className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                {activeTab === 'contacts' ? (
+                {activeTab === "contacts" ? (
                   <>
                     <UserPlus size={20} />
                     Agregar Contacto
@@ -279,11 +316,11 @@ function App() {
           <div className="border-b border-gray-200">
             <div className="flex">
               <button
-                onClick={() => setActiveTab('contacts')}
+                onClick={() => setActiveTab("contacts")}
                 className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-                  activeTab === 'contacts'
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  activeTab === "contacts"
+                    ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -292,11 +329,11 @@ function App() {
                 </div>
               </button>
               <button
-                onClick={() => setActiveTab('appointments')}
+                onClick={() => setActiveTab("appointments")}
                 className={`flex-1 px-6 py-4 text-sm font-medium transition-colors ${
-                  activeTab === 'appointments'
-                    ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50'
-                    : 'text-gray-600 hover:text-gray-800 hover:bg-gray-50'
+                  activeTab === "appointments"
+                    ? "text-blue-600 border-b-2 border-blue-600 bg-blue-50"
+                    : "text-gray-600 hover:text-gray-800 hover:bg-gray-50"
                 }`}
               >
                 <div className="flex items-center justify-center gap-2">
@@ -308,7 +345,7 @@ function App() {
           </div>
 
           <div className="p-6">
-            {activeTab === 'contacts' ? (
+            {activeTab === "contacts" ? (
               <ContactList
                 contacts={contacts}
                 onEdit={handleEditContact}
